@@ -1,0 +1,36 @@
+{
+  "name": "tidb-sql-parser",
+  "version": "1.0.0",
+  "description": "TiDB SQL Parser based on ANTLR4 for TypeScript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "antlr4": "antlr4 -Dlanguage=TypeScript -visitor -no-listener -o src/parser/generated grammar/TiDBLexer.g4 grammar/TiDBParser.g4",
+    "prebuild": "npm run antlr4",
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist src/parser/generated",
+    "example": "ts-node examples/basic-usage.ts",
+    "test": "jest"
+  },
+  "keywords": [
+    "tidb",
+    "sql",
+    "parser",
+    "antlr4",
+    "ast",
+    "sql-rewriter",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "antlr4-cli": "^4.13.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "antlr4": "^4.13.1-patch-1"
+  }
+}
