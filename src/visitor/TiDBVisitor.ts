@@ -1,4 +1,4 @@
-import { AbstractParseTreeVisitor } from 'antlr4';
+import { AbstractParseTreeVisitor } from 'antlr4ng';
 import { TiDBParserVisitor } from '../parser/generated/TiDBParserVisitor';
 import * as Parser from '../parser/generated/TiDBParser';
 

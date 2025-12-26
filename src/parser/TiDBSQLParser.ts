@@ -1,4 +1,4 @@
-import { CharStream, CommonTokenStream } from 'antlr4';
+import { CharStream, CommonTokenStream } from 'antlr4ng';
 import { TiDBLexer } from './generated/TiDBLexer';
 import { TiDBParser, RootContext } from './generated/TiDBParser';
 
