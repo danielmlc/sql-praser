@@ -16,7 +16,7 @@ export declare class TenantFilterListener extends BaseListener<TenantListenerCon
     /**
      * 处理 SQL（使用 ANTLR4 Listener 模式）
      */
-    process(ast: any, context: ListenerContext): any;
+    process(_ast: unknown, context: ListenerContext): void;
     /**
      * 清理 CTE 表名集合
      */

@@ -21,6 +21,13 @@ interface TestCase {
   only?: boolean;
 }
 
+// 测试常量
+const TEST_CONSTANTS = {
+  DEFAULT_TENANT: 'sxlq',
+  DEFAULT_DATABASE: 'tnt_ma',
+  DEFAULT_PREFIX: 'tnt_',
+} as const;
+
 // 断言工具
 function assertContains (sql: string, fragment: string, message?: string): void {
   if (!sql.includes(fragment)) {
@@ -69,9 +76,9 @@ class TestSuite {
         abortOnError: false,
         tenantField: 'tenant',
         targetDatabases: {
-          prefixes: ['tnt_'],
+          prefixes: [TEST_CONSTANTS.DEFAULT_PREFIX],
           fullNames: [],
-          defaultDatabase: 'tnt_ma'
+          defaultDatabase: TEST_CONSTANTS.DEFAULT_DATABASE
         }
       },
       hint: {
@@ -349,6 +356,14 @@ async function runAllTests (): Promise<void> {
       }
     },
     {
+      name: 'INNER JOIN 两不同库表',
+      input: "/*& tenant:'sxlq' */ SELECT u.username, o.product_name, o.amount, o.status FROM tnt_ma.users u JOIN global_ma.orders o ON u.id = o.user_id WHERE o.status = 'completed'",
+      expected: {
+        sql: "JOIN",
+        tenant: 'sxlq'
+      }
+    },
+    {
       name: 'LEFT JOIN',
       input: "/*& tenant:'sxlq' */ SELECT u.tenant, u.username, COUNT(o.order_id) as order_count FROM tnt_ma.users u LEFT JOIN tnt_ma.orders o ON u.tenant = o.tenant AND u.id = o.user_id GROUP BY u.tenant, u.id",
       expected: {
@@ -404,7 +419,7 @@ async function runAllTests (): Promise<void> {
   await suite.run('WHERE 子查询测试', [
     {
       name: 'WHERE 标量子查询',
-      input: "/*& tenant:'sxlq' */ SELECT u.username, u.email FROM tnt_ma.users u WHERE u.age > (SELECT AVG(age) FROM tnt_ma.users)",
+      input: "/*& tenant:'sxlq' */ SELECT u.username, u.email FROM tnt_ma.users u WHERE u.age > (SELECT AVG(age) FROM global_ma.users)",
       expected: {
         sql: "SELECT",
         tenant: 'sxlq'
@@ -761,8 +776,15 @@ async function runAllTests (): Promise<void> {
       }
     },
     {
+      name: '#注释的 SQL',
+      input: "# This is a comment\nSELECT * FROM users",
+      expected: {
+        sql: "SELECT"
+      }
+    },
+    {
       name: '复杂嵌套查询',
-      input: "/*& tenant:'sxlq' */ WITH cte AS (SELECT * FROM users) SELECT * FROM cte WHERE id IN (SELECT user_id FROM orders WHERE amount > (SELECT AVG(amount) FROM orders))",
+      input: "/*& tenant:'sxlq' */ WITH cte AS (SELECT * FROM tnt_ma.users) SELECT * FROM cte WHERE id IN (SELECT user_id FROM tnt_ma.orders WHERE amount > (SELECT AVG(amount) FROM tnt_ma.orders))",
       expected: {
         sql: "WITH",
         tenant: 'sxlq'
@@ -790,7 +812,7 @@ async function runAllTests (): Promise<void> {
             abortOnError: false,
             tenantField: 'company_id',
             targetDatabases: {
-              prefixes: ['global_ma', 'global_mtlp'],
+              prefixes: ['global_', 'tnt_'],
               fullNames: ['specific_db'],
               defaultDatabase: 'default_db'
             }
@@ -826,7 +848,7 @@ async function runAllTests (): Promise<void> {
             abortOnError: false,
             tenantField: 'tenant',
             targetDatabases: {
-              prefixes: ['customer_data', 'user_data'],
+              prefixes: ['customer_', 'user_'],
               fullNames: [],
               defaultDatabase: 'main_db'
             }
@@ -937,6 +959,42 @@ async function runAllTests (): Promise<void> {
               prefixes: [],
               fullNames: [],
               defaultDatabase: 'default_db'
+            }
+          },
+          hint: {
+            enabled: true,
+            priority: 10,
+            abortOnError: false,
+            preserveHint: false
+          }
+        },
+        errorHandling: {
+          throwOnError: false,
+          collectAll: true,
+          maxErrors: 10,
+          logErrors: false
+        }
+      }
+    },
+    {
+      name: '默认库配置覆盖要求改写',
+      input: "/*& tenant:'test' */ SELECT * FROM users where name = 'zhangsan'",
+      expected: {
+        sql: "SELECT",
+        tenant: 'test'
+      },
+      config: {
+        dialect: 'mysql' as any,
+        listeners: {
+          tenant: {
+            enabled: true,  // 禁用租户过滤
+            priority: 100,
+            abortOnError: false,
+            tenantField: 'tenant',
+            targetDatabases: {
+              prefixes: ['tnt_'],
+              fullNames: [],
+              defaultDatabase: 'tnt_ma'
             }
           },
           hint: {
