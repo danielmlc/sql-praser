@@ -7,6 +7,7 @@ export * from './enums';
 
 // 类型
 export * from './types';
+export * from './antlr4-types';
 
 // 接口
 export * from './interfaces';

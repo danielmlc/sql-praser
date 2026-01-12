@@ -1,0 +1,62 @@
+/**
+ * ANTLR4 生成代码加载器
+ * 统一处理动态加载 ANTLR4 生成代码的逻辑
+ */
+/**
+ * 加载结果
+ */
+export interface LoadResult<T> {
+    /** 加载的模块 */
+    module: T | null;
+    /** 是否成功加载 */
+    success: boolean;
+    /** 错误信息（如果加载失败） */
+    error?: Error;
+    /** 加载路径 */
+    loadedFrom?: string;
+}
+/**
+ * ANTLR4 生成代码加载器
+ * 提供统一的加载逻辑，支持多种加载路径和错误处理
+ */
+export declare class Antlr4Loader {
+    /**
+     * 加载 ANTLR4 生成的模块
+     * @param moduleName 模块名称（不含路径和扩展名）
+     * @param exportName 导出名称（默认与模块名相同）
+     * @param options 加载选项
+     * @returns 加载结果
+     */
+    static loadModule<T>(moduleName: string, exportName?: string, options?: {
+        /** 是否在加载失败时抛出异常（默认 true） */
+        throwOnError?: boolean;
+        /** 自定义日志函数（默认 console.error） */
+        logger?: (msg: string, ...args: any[]) => void;
+        /** 调用方路径（用于解析相对路径） */
+        callerPath?: string;
+    }): LoadResult<T>;
+    /**
+     * 获取模块加载路径列表
+     * @param callerPath 调用方路径
+     * @param moduleName 模块名称
+     * @returns 路径列表
+     */
+    private static getLoadPaths;
+    /**
+     * 批量加载多个模块
+     * @param modules 模块配置数组
+     * @returns 加载结果映射
+     */
+    static loadModules<T extends Record<string, any>>(modules: Array<{
+        name: string;
+        export?: string;
+        key: string;
+    }>): Record<string, LoadResult<any>>;
+    /**
+     * 验证必需的模块是否都已加载
+     * @param results 加载结果映射
+     * @param requiredKeys 必需的键列表
+     * @returns 是否全部成功
+     */
+    static validateRequired(results: Record<string, LoadResult<any>>, requiredKeys: string[]): boolean;
+}

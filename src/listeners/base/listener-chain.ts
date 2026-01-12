@@ -77,8 +77,7 @@ export class ListenerChain {
         results.push(errorResult);
 
         // 检查是否需要中断
-        // TODO: 从配置中读取 abortOnError 设置
-        const abortOnError = false;
+        const abortOnError = (listener as any).config?.abortOnError ?? false;
         if (abortOnError) {
           break;
         }

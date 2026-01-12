@@ -20,7 +20,8 @@
       "Bash(pnpm run test)",
       "Bash(pnpm test:*)",
       "Bash(pnpm ts-node:*)",
-      "Bash(1)"
+      "Bash(1)",
+      "Bash(git checkout:*)"
     ]
   }
 }
