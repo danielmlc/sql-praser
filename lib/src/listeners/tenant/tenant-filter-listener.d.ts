@@ -1,0 +1,24 @@
+import { BaseListener } from '../base/base-listener';
+import { ListenerContext, TenantListenerConfig } from '../../core/types';
+/**
+ * 租户条件 Listener
+ * 负责在 SQL 中添加租户过滤条件
+ */
+export declare class TenantFilterListener extends BaseListener<TenantListenerConfig> {
+    protected readonly name = "TenantFilterListener";
+    private cteTableNames;
+    constructor(config: TenantListenerConfig);
+    /**
+     * 获取优先级
+     * 租户过滤应该优先级较高（数字小），在库名改写之后执行
+     */
+    getPriority(): number;
+    /**
+     * 处理 SQL（使用 ANTLR4 Listener 模式）
+     */
+    process(ast: any, context: ListenerContext): any;
+    /**
+     * 清理 CTE 表名集合
+     */
+    protected onCleanup(): void;
+}

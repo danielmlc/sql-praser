@@ -1,0 +1,7 @@
+# Ignore ANTLR4 intermediate files
+*.interp
+*.java
+
+# Keep TypeScript files and tokens
+!.ts
+!.tokens

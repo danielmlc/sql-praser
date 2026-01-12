@@ -1,11 +1,26 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install)",
-      "Bash(npm view:*)",
-      "Bash(npm search:*)",
-      "Bash(npm run build:*)",
-      "Bash(java:*)"
+      "Bash(pnpm add:*)",
+      "Bash(pnpm install:*)",
+      "Bash(curl:*)",
+      "Bash(pnpm run generate:parser:*)",
+      "Bash(java:*)",
+      "Bash(echo:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(\"/c/Program Files/Java/jdk-17/bin/java.exe\" -version)",
+      "Bash(export JAVA_HOME:*)",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\":*)",
+      "Bash(npx antlr4ng --help:*)",
+      "Bash(pnpm list:*)",
+      "Bash(npx:*)",
+      "Bash(wc:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm run build)",
+      "Bash(pnpm run test)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm ts-node:*)",
+      "Bash(1)"
     ]
   }
 }

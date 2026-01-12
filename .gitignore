@@ -1,13 +1,1 @@
-node_modules/
-dist/
-src/parser/generated/
-*.log
-.DS_Store
-*.swp
-*.swo
-.idea/
-.vscode/
-*.js
-*.d.ts
-*.map
-!jest.config.js
+/node_modules

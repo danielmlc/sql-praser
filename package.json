@@ -1,36 +1,46 @@
 {
-  "name": "tidb-sql-parser",
-  "version": "1.0.0",
-  "description": "TiDB SQL Parser based on ANTLR4 for TypeScript",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "name": "@cs/sql-parser-antlr4",
+  "version": "2.0.0-alpha.1",
+  "description": "SQL Parser based on ANTLR4 with MySQL/TiDB support",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib",
+    "grammar",
+    "generated"
+  ],
   "scripts": {
-    "antlr4": "antlr4ng -Dlanguage=TypeScript -visitor -no-listener -o src/parser/generated grammar/TiDBLexer.g4 grammar/TiDBParser.g4",
-    "prebuild": "npm run antlr4",
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "clean": "rm -rf dist src/parser/generated",
-    "example": "ts-node examples/basic-usage.ts",
-    "test": "jest"
+    "prebuild": "rimraf lib",
+    "build": "tsc -p ./tsconfig.json",
+    "watch": "tsc -p ./tsconfig.json --watch",
+    "generate:parser": "antlr-ng -Dlanguage=TypeScript -o ./generated/mysql grammar/mysql/MySqlLexer.g4 grammar/mysql/MySqlParser.g4",
+    "generate:parser:tidb": "antlr-ng -Dlanguage=TypeScript -o ./generated/tidb grammar/tidb/TiDBLexer.g4 grammar/tidb/TiDBParser.g4",
+    "generate:all": "pnpm run generate:parser && pnpm run generate:parser:tidb",
+    "test": "node -r ts-node/register test/tenant-filter.test.ts",
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [
-    "tidb",
     "sql",
     "parser",
     "antlr4",
-    "ast",
-    "sql-rewriter",
-    "typescript"
+    "mysql",
+    "tidb",
+    "tenant",
+    "rewrite"
   ],
-  "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/node": "^20.10.0",
-    "antlr4ng-cli": "^2.0.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+  "author": "danielmlc <danielmlc@126.com>",
+  "license": "ISC",
+  "dependencies": {
+    "antlr4ng": "^3.0.16"
   },
-  "dependencies": { 
-    "antlr4ng": "^3.0.0"
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "antlr-ng": "^1.0.10",
+    "rimraf": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   }
 }
