@@ -16,7 +16,7 @@ export * from './config';
 
 import { SQLProcessorOrchestrator } from './orchestrator';
 import { ConfigManager } from './config';
-import { SqlParserConfig, RewriteResult } from './core/types';
+import { SqlParserConfig, RewriteResult, HintInfo } from './core/types';
 
 /**
  * SqlParserService
@@ -210,7 +210,7 @@ export class SqlParserService {
    * @param sql SQL 字符串
    * @returns Hint 信息
    */
-  static extractHint(sql: string): any {
+  static extractHint(sql: string): HintInfo | undefined {
     const hintRegex = /\/\*&\s*tenant\s*:\s*['"]([^'"]+)['"]\s*\*\//i;
     const match = sql.match(hintRegex);
     if (match) {

@@ -91,7 +91,8 @@ export class TenantFilterListener extends BaseListener<TenantListenerConfig> {
     ListenerBinder.bindAllEnterExit(antlrListener);
 
     // 使用 ParseTreeWalker 遍历语法树
-    ParseTreeWalker.DEFAULT.walk(antlrListener as any, parseTree);
+    // ParseTreeWalker.DEFAULT.walk 的第二个参数类型为 any，需要保留断言
+    ParseTreeWalker.DEFAULT.walk(antlrListener as any, parseTree as any);
   }
 
   /**

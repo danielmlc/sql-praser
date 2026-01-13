@@ -1,4 +1,4 @@
-import { ParseResult, SqlParserConfig } from './types';
+import { ParseResult, SqlParserConfig, ParseTree, ListenerContext } from './types';
 import { SQLDialect } from './enums';
 
 // ============================================================================
@@ -58,7 +58,7 @@ export interface IDialectAdapter {
    * @param ast 原始 AST
    * @returns 适配后的 AST
    */
-  adaptAST(ast: any): any;
+  adaptAST(ast: ParseTree): ParseTree;
 
   /**
    * 获取方言支持的特性
@@ -93,21 +93,21 @@ export interface ISQLListener {
    * 处理前的钩子
    * @param context 处理上下文
    */
-  beforeProcess?(context: any): void;
+  beforeProcess?(context: ListenerContext): void;
 
   /**
    * 处理 AST
    * @param ast AST 对象
    * @param context 处理上下文
-   * @returns 处理后的 AST
+   * @returns 处理后的 AST（可选）
    */
-  process(ast: any, context: any): any;
+  process(ast: ParseTree, context: ListenerContext): void;
 
   /**
    * 处理后的钩子
    * @param context 处理上下文
    */
-  afterProcess?(context: any): void;
+  afterProcess?(context: ListenerContext): void;
 
   /**
    * 获取优先级（数字越小优先级越高）

@@ -1,5 +1,6 @@
 import { IDialectAdapter } from '../core/interfaces';
 import { SQLDialect } from '../core/enums';
+import { ParseTree } from '../core/types';
 
 /**
  * 基础 Adapter 抽象类
@@ -10,7 +11,7 @@ export abstract class BaseDialectAdapter implements IDialectAdapter {
    * 将方言特定 AST 适配为标准格式
    * 默认实现直接返回（适用于标准方言如 MySQL）
    */
-  adaptAST(ast: any): any {
+  adaptAST(ast: ParseTree): ParseTree {
     // 默认不做转换，子类可以重写
     return ast;
   }

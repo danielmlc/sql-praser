@@ -1,3 +1,4 @@
+import { BaseListener } from '../listeners/base/base-listener';
 import { SqlParserConfig, RewriteResult } from '../core/types';
 /**
  * SQL 处理编排器
@@ -15,7 +16,7 @@ export declare class SQLProcessorOrchestrator {
     /**
      * 添加自定义 Listener
      */
-    addListener(listener: any): void;
+    addListener(listener: BaseListener): void;
     /**
      * 配置管理
      */

@@ -1,7 +1,7 @@
 import { CharStream, CommonTokenStream } from 'antlr4ng';
 import { BaseSQLParser } from '../base-parser';
 import { SQLDialect } from '../../core/enums';
-import type { ParseResult } from '../../core/types';
+import type { ParseResult, ANTLR4Lexer, ANTLR4Parser, ParseTree } from '../../core/types';
 import { Antlr4Loader } from '../../utils/antlr4-loader';
 
 // 导入生成的 ANTLR4 类
@@ -36,14 +36,14 @@ export class MySQLParser extends BaseSQLParser {
   /**
    * 创建词法分析器
    */
-  protected createLexer(inputStream: CharStream): any {
+  protected createLexer(inputStream: CharStream): ANTLR4Lexer {
     return new MySqlLexer(inputStream);
   }
 
   /**
    * 创建语法分析器
    */
-  protected createParser(tokenStream: CommonTokenStream): any {
+  protected createParser(tokenStream: CommonTokenStream): ANTLR4Parser {
     return new MySqlParser(tokenStream);
   }
 
@@ -51,8 +51,10 @@ export class MySQLParser extends BaseSQLParser {
    * 开始解析
    * MySQL 的根规则是 `root`
    */
-  protected startParsing(parser: any): any {
-    return parser.root();
+  protected startParsing(parser: ANTLR4Parser): ParseTree {
+    // ANTLR4 生成的 Parser 有 root() 方法，但 TypeScript 类型中没有定义
+    // 使用类型断言访问生成的解析方法
+    return (parser as any).root() as ParseTree;
   }
 
   /**

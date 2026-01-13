@@ -1,5 +1,5 @@
 import { BaseListener } from '../base/base-listener';
-import { ListenerContext, HintListenerConfig } from '../../core/types';
+import { ListenerContext, HintListenerConfig, ParseTree } from '../../core/types';
 /**
  * Hint Listener
  * 负责提取和移除 SQL 中的 Hint
@@ -15,7 +15,7 @@ export declare class HintListener extends BaseListener<HintListenerConfig> {
     /**
      * 处理 SQL，提取 Hint
      */
-    process(ast: any, context: ListenerContext): any;
+    process(ast: ParseTree, context: ListenerContext): void;
     /**
      * 提取租户 Hint
      * 支持格式：/*& tenant:'xxx' *\/

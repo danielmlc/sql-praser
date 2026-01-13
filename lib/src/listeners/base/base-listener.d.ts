@@ -1,5 +1,5 @@
 import { ISQLListener } from '../../core/interfaces';
-import { BaseListenerConfig, ListenerContext } from '../../core/types';
+import { BaseListenerConfig, ListenerContext, ParseTree } from '../../core/types';
 /**
  * 基础 Listener 抽象类
  * 所有自定义 Listener 都应该继承此类
@@ -32,7 +32,7 @@ export declare abstract class BaseListener<TConfig extends BaseListenerConfig = 
     /**
      * 处理 AST（子类必须实现）
      */
-    abstract process(ast: any, context: ListenerContext): any;
+    abstract process(ast: ParseTree, context: ListenerContext): void;
     /**
      * 处理后的钩子
      */

@@ -1,7 +1,7 @@
 import { CharStream, CommonTokenStream, TokenStreamRewriter } from 'antlr4ng';
 import { ISQLParser } from '../core/interfaces';
 import { SQLDialect } from '../core/enums';
-import type { ParseResult } from '../core/types';
+import type { ParseResult, ANTLR4Lexer, ANTLR4Parser, ParseTree } from '../core/types';
 
 /**
  * 基础 Parser 抽象类
@@ -51,9 +51,9 @@ export abstract class BaseSQLParser implements ISQLParser {
     } catch (error) {
       return {
         originalSql: sql,
-        parseTree: null as any,
-        tokenStream: null as any,
-        rewriter: null as any,
+        parseTree: null as unknown as ParseTree,
+        tokenStream: null as unknown as CommonTokenStream,
+        rewriter: null as unknown as TokenStreamRewriter,
         lexerErrors: [],
         parserErrors: [
           {
@@ -90,15 +90,15 @@ export abstract class BaseSQLParser implements ISQLParser {
   /**
    * 创建词法分析器（子类实现）
    */
-  protected abstract createLexer(inputStream: CharStream): any;
+  protected abstract createLexer(inputStream: CharStream): ANTLR4Lexer;
 
   /**
    * 创建语法分析器（子类实现）
    */
-  protected abstract createParser(tokenStream: CommonTokenStream): any;
+  protected abstract createParser(tokenStream: CommonTokenStream): ANTLR4Parser;
 
   /**
    * 开始解析（子类实现，调用对应的根规则）
    */
-  protected abstract startParsing(parser: any): any;
+  protected abstract startParsing(parser: ANTLR4Parser): ParseTree;
 }

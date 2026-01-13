@@ -3,6 +3,7 @@ import { AdapterFactory } from '../adapter/factory';
 import { ListenerChain } from '../listeners/base/listener-chain';
 import { HintListener } from '../listeners/tenant/hint-listener';
 import { TenantFilterListener } from '../listeners/tenant/tenant-filter-listener';
+import { BaseListener } from '../listeners/base/base-listener';
 import { SqlParserConfig, RewriteResult, ListenerContext } from '../core/types';
 import { SQLDialect } from '../core/enums';
 
@@ -53,7 +54,7 @@ export class SQLProcessorOrchestrator {
         tokenStream: parseResult.tokenStream,
         parseTree: parseResult.parseTree,
         config: this.config.listeners,
-        sharedState: new Map<string, any>(),
+        sharedState: new Map(),
       };
 
       // 4. 执行 Listener 链
@@ -91,7 +92,7 @@ export class SQLProcessorOrchestrator {
   /**
    * 添加自定义 Listener
    */
-  addListener(listener: any): void {
+  addListener(listener: BaseListener): void {
     this.listenerChain.addListener(listener);
   }
 

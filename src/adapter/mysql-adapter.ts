@@ -1,5 +1,6 @@
 import { BaseDialectAdapter } from './base-adapter';
 import { SQLDialect } from '../core/enums';
+import { ParseTree } from '../core/types';
 
 /**
  * MySQL Adapter
@@ -77,7 +78,7 @@ export class MySQLAdapter extends BaseDialectAdapter {
   /**
    * MySQL AST 不需要转换，已经是标准格式
    */
-  adaptAST(ast: any): any {
+  adaptAST(ast: ParseTree): ParseTree {
     return ast;
   }
 }

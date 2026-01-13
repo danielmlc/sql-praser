@@ -11,7 +11,7 @@ export * from './adapter';
 export * from './listeners';
 export * from './orchestrator';
 export * from './config';
-import { SqlParserConfig, RewriteResult } from './core/types';
+import { SqlParserConfig, RewriteResult, HintInfo } from './core/types';
 /**
  * SqlParserService
  * 向后兼容的服务类，提供静态 API
@@ -89,7 +89,7 @@ export declare class SqlParserService {
      * @param sql SQL 字符串
      * @returns Hint 信息
      */
-    static extractHint(sql: string): any;
+    static extractHint(sql: string): HintInfo | undefined;
     /**
      * 检查是否有 Hint
      * @param sql SQL 字符串

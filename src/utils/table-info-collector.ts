@@ -10,6 +10,7 @@ import type {
   TableSourceItemContext,
   JoinedTableContext,
   TableNameContext,
+  ParserRuleContext,
 } from '../core/antlr4-types';
 
 /**
@@ -116,7 +117,7 @@ export class TableInfoCollector {
     const tables: TableInfo[] = [];
     const seenKeys = new Set<string>(); // 用于去重
 
-    const collectFromContext = (ctx: any) => {
+    const collectFromContext = (ctx: ParserRuleContext) => {
       for (let i = 0; i < (ctx.getChildCount?.() || 0); i++) {
         const child = ctx.getChild(i);
         if (!child) {
@@ -177,7 +178,7 @@ export class TableInfoCollector {
         tableInfo.alias = parentCtx.alias.getText();
       } else if (parentCtx.uid) {
         // uid 可能是方法或属性
-        const uid = typeof parentCtx.uid === 'function' ? (parentCtx.uid as () => any)() : parentCtx.uid;
+        const uid = typeof parentCtx.uid === 'function' ? (parentCtx.uid as () => { getText(): string })() : parentCtx.uid;
         if (uid) {
           tableInfo.alias = uid.getText();
         }
