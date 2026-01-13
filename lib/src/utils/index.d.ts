@@ -4,3 +4,4 @@
 export * from './table-info-collector';
 export * from './listener-binder';
 export * from './antlr4-loader';
+export * from './tenant-id-validator';

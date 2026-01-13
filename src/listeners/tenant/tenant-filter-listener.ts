@@ -18,6 +18,7 @@ import { ParseTreeWalker, CommonTokenStream } from 'antlr4ng';
 import { TableInfoCollector } from '../../utils/table-info-collector';
 import { ListenerBinder } from '../../utils/listener-binder';
 import { Antlr4Loader } from '../../utils/antlr4-loader';
+import { TenantIdValidator } from '../../utils/tenant-id-validator';
 
 // 动态导入生成的 ANTLR4 Listener（避免编译时依赖）
 const { module: MySqlParserListener, success: listenerLoaded } = Antlr4Loader.loadModule(
@@ -63,14 +64,24 @@ export class TenantFilterListener extends BaseListener<TenantListenerConfig> {
     }
 
     const { rewriter, tokenStream, parseTree } = context;
-    const tenantId = tenantInfo.tenant;
+    const rawTenantId = tenantInfo.tenant;
     const tenantField = this.config.tenantField;
+
+    // 验证并转义租户 ID（防止 SQL 注入）
+    let escapedTenantId: string;
+    try {
+      escapedTenantId = TenantIdValidator.escapeForSql(rawTenantId);
+    } catch (error) {
+      throw new Error(
+        `Invalid tenant ID in tenant-filter-listener: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
 
     // 创建 ANTLR4 Listener 来遍历语法树
     const antlrListener = new TenantConditionListener(
       rewriter,
       tokenStream,
-      tenantId,
+      escapedTenantId,
       tenantField,
       this.config.targetDatabases,
       this.cteTableNames
