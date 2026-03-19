@@ -1,7 +1,8 @@
 import { CharStream, CommonTokenStream } from 'antlr4ng';
 import { BaseSQLParser } from '../base-parser';
 import { SQLDialect } from '../../core/enums';
-import type { ParseResult, ANTLR4Lexer, ANTLR4Parser, ParseTree } from '../../core/types';
+import type { ParseResult, ParseTree } from '../../core/types';
+import type { ANTLR4Lexer, ANTLR4Parser } from '../../core/antlr4-types';
 import { Antlr4Loader } from '../../utils/antlr4-loader';
 
 // 导入生成的 ANTLR4 类

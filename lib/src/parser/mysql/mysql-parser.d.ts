@@ -1,7 +1,8 @@
 import { CharStream, CommonTokenStream } from 'antlr4ng';
 import { BaseSQLParser } from '../base-parser';
 import { SQLDialect } from '../../core/enums';
-import type { ANTLR4Lexer, ANTLR4Parser, ParseTree } from '../../core/types';
+import type { ParseTree } from '../../core/types';
+import type { ANTLR4Lexer, ANTLR4Parser } from '../../core/antlr4-types';
 /**
  * MySQL Parser 实现
  * 基于 ANTLR4 生成的 MySQL Parser

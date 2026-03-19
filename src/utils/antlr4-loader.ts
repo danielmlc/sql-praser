@@ -4,7 +4,6 @@
  */
 
 import * as path from 'path';
-import * as fs from 'fs';
 import { ParserError } from '../core/types';
 
 /**
@@ -105,27 +104,16 @@ export class Antlr4Loader {
    */
   private static getLoadPaths(callerPath: string, moduleName: string): string[] {
     const relativePath = path.join(callerPath, '../../../');
-    const paths: string[] = [];
 
-    // 1. 尝试从编译后的 lib 目录加载（生产环境）
-    const libPath = path.join(relativePath, 'lib/generated/mysql');
-    const libJsPath = path.join(libPath, `${moduleName}.js`);
-    if (fs.existsSync(libJsPath)) {
-      paths.push(libJsPath);
-    }
-
-    // 2. 尝试从源目录加载（开发环境）
-    const genPath = path.join(relativePath, 'generated/mysql');
-    const genTsPath = path.join(genPath, `${moduleName}.ts`);
-    const genJsPath = path.join(genPath, `${moduleName}`);
-    if (fs.existsSync(genTsPath) || fs.existsSync(genJsPath + '.js')) {
-      paths.push(genJsPath);
-    }
-
-    // 3. 尝试直接导入（Node.js 模块解析）
-    paths.push(`antlr4ng/src/${moduleName}`);
-
-    return paths;
+    // require() 调用本身已在 try/catch 中，无需 existsSync 预检（TOCTOU 反模式）
+    return [
+      // 1. 编译后的 lib 目录（生产环境）
+      path.join(relativePath, 'lib/generated/mysql', `${moduleName}.js`),
+      // 2. 源目录（开发环境，ts-node 场景）
+      path.join(relativePath, 'generated/mysql', moduleName),
+      // 3. Node.js 模块解析兜底
+      `antlr4ng/src/${moduleName}`,
+    ];
   }
 
   /**

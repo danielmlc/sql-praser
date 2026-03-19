@@ -6,7 +6,6 @@ import { ListenerContext, TenantListenerConfig } from '../../core/types';
  */
 export declare class TenantFilterListener extends BaseListener<TenantListenerConfig> {
     protected readonly name = "TenantFilterListener";
-    private cteTableNames;
     constructor(config: TenantListenerConfig);
     /**
      * 获取优先级
@@ -17,8 +16,4 @@ export declare class TenantFilterListener extends BaseListener<TenantListenerCon
      * 处理 SQL（使用 ANTLR4 Listener 模式）
      */
     process(_ast: unknown, context: ListenerContext): void;
-    /**
-     * 清理 CTE 表名集合
-     */
-    protected onCleanup(): void;
 }

@@ -1,7 +1,8 @@
 import { CharStream, CommonTokenStream, TokenStreamRewriter } from 'antlr4ng';
 import { ISQLParser } from '../core/interfaces';
 import { SQLDialect } from '../core/enums';
-import type { ParseResult, ANTLR4Lexer, ANTLR4Parser, ParseTree } from '../core/types';
+import type { ParseResult, ParseTree } from '../core/types';
+import type { ANTLR4Lexer, ANTLR4Parser } from '../core/antlr4-types';
 
 /**
  * 基础 Parser 抽象类

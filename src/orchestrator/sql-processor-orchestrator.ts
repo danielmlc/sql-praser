@@ -1,11 +1,10 @@
 import { ParserFactory } from '../parser/factory';
-import { AdapterFactory } from '../adapter/factory';
 import { ListenerChain } from '../listeners/base/listener-chain';
 import { HintListener } from '../listeners/tenant/hint-listener';
 import { TenantFilterListener } from '../listeners/tenant/tenant-filter-listener';
 import { BaseListener } from '../listeners/base/base-listener';
-import { SqlParserConfig, RewriteResult, ListenerContext } from '../core/types';
-import { SQLDialect } from '../core/enums';
+import { SqlParserConfig, RewriteResult, ListenerContext, SHARED_STATE_KEYS } from '../core/types';
+import { ISQLParser } from '../core/interfaces';
 
 /**
  * SQL 处理编排器
@@ -14,9 +13,11 @@ import { SQLDialect } from '../core/enums';
 export class SQLProcessorOrchestrator {
   private listenerChain: ListenerChain;
   private config: SqlParserConfig;
+  private parser: ISQLParser;
 
   constructor(config: SqlParserConfig) {
     this.config = config;
+    this.parser = ParserFactory.createParser(config.dialect);
     this.listenerChain = new ListenerChain();
     this.setupDefaultListeners();
   }
@@ -28,8 +29,7 @@ export class SQLProcessorOrchestrator {
   process(sql: string): RewriteResult {
     try {
       // 1. 解析 SQL
-      const parser = ParserFactory.createParser(this.config.dialect);
-      const parseResult = parser.parseWithDetails(sql);
+      const parseResult = this.parser.parseWithDetails(sql);
 
       if (!parseResult.success) {
         // 解析失败，根据配置决定是否抛出错误
@@ -43,11 +43,7 @@ export class SQLProcessorOrchestrator {
         };
       }
 
-      // 2. 适配方言（目前 MySQL 不需要适配）
-      const adapter = AdapterFactory.createAdapter(this.config.dialect);
-      // const adaptedAST = adapter.adaptAST(parseResult.parseTree);
-
-      // 3. 准备上下文
+      // 2. 准备上下文
       const context: ListenerContext = {
         originalSql: sql,
         rewriter: parseResult.rewriter,
@@ -67,7 +63,7 @@ export class SQLProcessorOrchestrator {
       const modified = listenerResults.some(r => r.modified);
 
       // 7. 提取 Hint 信息
-      const hint = context.sharedState.get('tenantInfo');
+      const hint = context.sharedState.get(SHARED_STATE_KEYS.TENANT_INFO);
 
       return {
         sql: resultSql,
@@ -102,8 +98,9 @@ export class SQLProcessorOrchestrator {
   updateConfig(newConfig: Partial<SqlParserConfig>): void {
     this.config = { ...this.config, ...newConfig };
 
-    // 如果方言改变，重新初始化 Listener
+    // 如果方言改变，重新创建 parser 并重新初始化 Listener
     if (newConfig.dialect) {
+      this.parser = ParserFactory.createParser(this.config.dialect);
       this.listenerChain.clear();
       this.setupDefaultListeners();
     }

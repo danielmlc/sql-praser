@@ -1,5 +1,5 @@
 import { BaseListener } from '../base/base-listener';
-import { ListenerContext, HintListenerConfig, HintInfo, ParseTree } from '../../core/types';
+import { ListenerContext, HintListenerConfig, HintInfo, ParseTree, SHARED_STATE_KEYS } from '../../core/types';
 
 /**
  * Hint Listener
@@ -31,7 +31,7 @@ export class HintListener extends BaseListener<HintListenerConfig> {
 
     if (tenantInfo) {
       // 将租户信息存入共享状态，供其他 Listener 使用
-      context.sharedState.set('tenantInfo', tenantInfo);
+      context.sharedState.set(SHARED_STATE_KEYS.TENANT_INFO, tenantInfo);
 
       // 如果不保留 Hint，则移除它
       if (!this.config.preserveHint && tenantInfo.original) {

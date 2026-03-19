@@ -19,6 +19,7 @@ import { TableInfoCollector } from '../../utils/table-info-collector';
 import { ListenerBinder } from '../../utils/listener-binder';
 import { Antlr4Loader } from '../../utils/antlr4-loader';
 import { TenantIdValidator } from '../../utils/tenant-id-validator';
+import { SHARED_STATE_KEYS } from '../../core/types';
 
 // 动态导入生成的 ANTLR4 Listener（避免编译时依赖）
 const { module: MySqlParserListener, success: listenerLoaded } = Antlr4Loader.loadModule(
@@ -40,7 +41,6 @@ if (!listenerLoaded) {
  */
 export class TenantFilterListener extends BaseListener<TenantListenerConfig> {
   protected readonly name = 'TenantFilterListener';
-  private cteTableNames = new Set<string>();
 
   constructor(config: TenantListenerConfig) {
     super(config);
@@ -58,7 +58,7 @@ export class TenantFilterListener extends BaseListener<TenantListenerConfig> {
    * 处理 SQL（使用 ANTLR4 Listener 模式）
    */
   process(_ast: unknown, context: ListenerContext): void {
-    const tenantInfo = context.sharedState.get('tenantInfo');
+    const tenantInfo = context.sharedState.get(SHARED_STATE_KEYS.TENANT_INFO);
     if (!tenantInfo?.tenant) {
       return; // 没有租户信息，不处理
     }
@@ -77,6 +77,9 @@ export class TenantFilterListener extends BaseListener<TenantListenerConfig> {
       );
     }
 
+    // 每次调用创建新的 Set，避免跨调用的共享可变状态
+    const cteTableNames = new Set<string>();
+
     // 创建 ANTLR4 Listener 来遍历语法树
     const antlrListener = new TenantConditionListener(
       rewriter,
@@ -84,7 +87,7 @@ export class TenantFilterListener extends BaseListener<TenantListenerConfig> {
       escapedTenantId,
       tenantField,
       this.config.targetDatabases,
-      this.cteTableNames
+      cteTableNames
     );
 
     // 使用 ListenerBinder 自动绑定方法
@@ -93,13 +96,6 @@ export class TenantFilterListener extends BaseListener<TenantListenerConfig> {
     // 使用 ParseTreeWalker 遍历语法树
     // ParseTreeWalker.DEFAULT.walk 的第二个参数类型为 any，需要保留断言
     ParseTreeWalker.DEFAULT.walk(antlrListener as any, parseTree as any);
-  }
-
-  /**
-   * 清理 CTE 表名集合
-   */
-  protected onCleanup(): void {
-    this.cteTableNames.clear();
   }
 }
 

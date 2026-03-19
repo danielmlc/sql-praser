@@ -7,6 +7,7 @@ import { SqlParserConfig, RewriteResult } from '../core/types';
 export declare class SQLProcessorOrchestrator {
     private listenerChain;
     private config;
+    private parser;
     constructor(config: SqlParserConfig);
     /**
      * 处理 SQL（同步方法）

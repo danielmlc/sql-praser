@@ -2,6 +2,42 @@
  * ANTLR4 生成代码的类型定义
  * 由于 ANTLR4 生成的代码没有 TypeScript 类型定义，这里提供接口定义
  */
+import { CharStream, CommonTokenStream, TokenSource } from 'antlr4ng';
+/**
+ * ANTLR4 Lexer 接口
+ * 由于 ANTLR4 生成的代码没有 TypeScript 类型，这里定义基础接口
+ * 扩展 TokenSource 以兼容 CommonTokenStream
+ */
+export interface ANTLR4Lexer extends TokenSource {
+    /** 输入字符流 */
+    input: CharStream;
+    /** 移除所有错误监听器 */
+    removeErrorListeners(): void;
+    /** 添加错误监听器 */
+    addErrorListener(listener: unknown): void;
+    /** 获取所有 Token */
+    getAllTokens(): unknown[];
+}
+/**
+ * ANTLR4 Parser 接口
+ * 由于 ANTLR4 生成的代码没有 TypeScript 类型，这里定义基础接口
+ */
+export interface ANTLR4Parser {
+    /** Token 流 */
+    tokenStream: CommonTokenStream;
+    /** 移除所有错误监听器 */
+    removeErrorListeners(): void;
+    /** 添加错误监听器 */
+    addErrorListener(listener: unknown): void;
+    /** 设置构建解析树 */
+    buildParseTrees: boolean;
+}
+/**
+ * 解析树类型
+ * 使用 ParserRuleContext 结构接口而非 any/unknown，以提供真实的类型约束
+ * 注意：传入 antlr4ng ParseTreeWalker.walk() 时仍需 as any，因其期望 antlr4ng 内部类型
+ */
+export type ParseTree = ParserRuleContext;
 /**
  * 解析树上下文基接口
  * 所有 ANTLR4 生成的 Context 都实现此接口
