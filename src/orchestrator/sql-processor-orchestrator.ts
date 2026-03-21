@@ -2,6 +2,7 @@ import { ParserFactory } from '../parser/factory';
 import { ListenerChain } from '../listeners/base/listener-chain';
 import { HintListener } from '../listeners/tenant/hint-listener';
 import { TenantFilterListener } from '../listeners/tenant/tenant-filter-listener';
+import { DatabaseRewriteListener } from '../listeners/database/database-rewrite-listener';
 import { BaseListener } from '../listeners/base/base-listener';
 import { SqlParserConfig, RewriteResult, ListenerContext, SHARED_STATE_KEYS } from '../core/types';
 import { ISQLParser } from '../core/interfaces';
@@ -122,15 +123,18 @@ export class SQLProcessorOrchestrator {
       new HintListener(this.config.listeners.hint)
     );
 
+    // 库名改写 Listener（优先级 50，在 Hint 之后、租户过滤之前）
+    if (this.config.listeners.databaseRewrite?.enabled) {
+      this.listenerChain.addListener(
+        new DatabaseRewriteListener(this.config.listeners.databaseRewrite)
+      );
+    }
+
     // 租户过滤 Listener
     if (this.config.listeners.tenant.enabled) {
       this.listenerChain.addListener(
         new TenantFilterListener(this.config.listeners.tenant)
       );
     }
-
-    // 未来可以添加更多 Listener：
-    // - DatabaseRewriteListener
-    // - Custom Listeners
   }
 }

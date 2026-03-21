@@ -1,0 +1,71 @@
+{
+  "timestamp": "2025-12-05T02:07:53.548Z",
+  "summary": {
+    "total": 5,
+    "success": 5,
+    "failure": 0,
+    "modified": 5
+  },
+  "results": [
+    {
+      "fileName": "1.sql",
+      "tenant": "sxlq",
+      "success": true,
+      "statistics": {
+        "originalLength": 1147,
+        "rewrittenLength": 1325,
+        "hasHint": true,
+        "sqlType": "select",
+        "modified": true
+      }
+    },
+    {
+      "fileName": "2.sql",
+      "tenant": "zt21",
+      "success": true,
+      "statistics": {
+        "originalLength": 7013,
+        "rewrittenLength": 6029,
+        "hasHint": true,
+        "sqlType": "select",
+        "modified": true
+      }
+    },
+    {
+      "fileName": "3.sql",
+      "tenant": "chceg",
+      "success": true,
+      "statistics": {
+        "originalLength": 20720,
+        "rewrittenLength": 16435,
+        "hasHint": true,
+        "sqlType": "select",
+        "modified": true
+      }
+    },
+    {
+      "fileName": "4.sql",
+      "tenant": "csdsj",
+      "success": true,
+      "statistics": {
+        "originalLength": 12953,
+        "rewrittenLength": 12504,
+        "hasHint": true,
+        "sqlType": "select",
+        "modified": true
+      }
+    },
+    {
+      "fileName": "5.sql",
+      "tenant": "sxlq",
+      "success": true,
+      "statistics": {
+        "originalLength": 1243,
+        "rewrittenLength": 1341,
+        "hasHint": true,
+        "sqlType": "select",
+        "modified": true
+      }
+    }
+  ]
+}

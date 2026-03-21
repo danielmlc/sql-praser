@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.package.json",
+  "compilerOptions": {
+    "outDir": "./lib"
+  },
+  "include": [                 // 明确指定要编译的文件
+    "src/**/*",
+  ],
+  "exclude": [                // 明确指定要排除的文件
+    "node_modules",
+    "src/test",
+    "lib",
+    "**/*spec.ts"
+  ]
+}

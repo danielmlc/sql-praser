@@ -1,6 +1,210 @@
+# 迭代执行清单
 
+> 原则：**测试优先（TDD）** — 每个功能严格按「写测试 → 实现功能 → 测试通过」三步走。
+> 完成后在对应条目打 ✅ 并记录日期。
 
-测试sql脚本范围：
+---
+
+## Phase 1：功能对齐（达到平替条件）
+
+### 1. 库名改写 Listener（DatabaseRewriteListener）
+
+旧库 `DatabaseNameRewriter` 的 ANTLR4 版本。优先级 50（在 HintListener 之后、TenantFilterListener 之前）。
+
+- [x] **1.1 编写测试用例** `test/database-rewrite.test.ts`
+  - 基础改写：`tnt_ma.users` → `dev_mc_tnt_ma.users`（添加前缀）
+  - 已有前缀跳过：`dev_mc_tnt_ma.users` 不重复添加
+  - 排除列表：配置 `excludeDatabases: ['system_db']`，不改写
+  - 目标列表：仅改写指定库名
+  - SELECT/INSERT/UPDATE/DELETE 全覆盖
+  - JOIN 跨库查询（两个库都需改写）
+  - 子查询中的库名改写
+  - CTE 中的库名改写
+  - 与租户注入联合使用（listener chain 同时启用两个 listener）
+- [x] **1.2 实现 DatabaseRewriteListener**
+  - 新建 `src/listeners/database/database-rewrite-listener.ts`
+  - 配置类型 `DatabaseRewriteListenerConfig`
+  - 通过 `TokenStreamRewriter.replace()` 原位替换库名 token
+  - 注册到 ListenerChain
+- [x] **1.3 全部测试通过** — 日期：2026-03-20 ✅ 26/26 pass
+
+### 2. EXPLAIN/DESCRIBE 包装语句处理
+
+旧库支持对 `EXPLAIN SELECT ...` 内嵌的 DML 语句注入租户条件。
+
+- [x] **2.1 编写测试用例** `test/wrapper-statement.test.ts`
+  - `EXPLAIN SELECT * FROM tnt_ma.users` → 内嵌 SELECT 注入租户条件
+  - `EXPLAIN UPDATE tnt_ma.users SET ...` → 内嵌 UPDATE 注入
+  - `EXPLAIN DELETE FROM tnt_ma.users ...` → 内嵌 DELETE 注入
+  - `DESCRIBE tnt_ma.users` → 无需注入（DDL 类）
+  - `EXPLAIN ANALYZE SELECT ...` → 内嵌 SELECT 注入
+  - 无 hint 的 EXPLAIN → 不处理
+- [x] **2.2 实现包装语句处理**
+  - ANTLR4 ParseTreeWalker 自动遍历 EXPLAIN 内嵌 DML，无需额外实现
+- [x] **2.3 全部测试通过** — 日期：2026-03-20 ✅ 11/11 pass（零代码改动，架构天然支持）
+
+### 3. 工具方法补齐
+
+补齐旧库 `SqlParserService` 上的实用方法，保持 API 兼容。
+
+- [x] **3.1 编写测试用例** `test/utility-methods.test.ts`
+  - `getSqlType(sql)` → 返回 `SELECT` / `INSERT` / `UPDATE` / `DELETE` / `CREATE` 等
+  - `createHint(tenant)` → 返回 `/*& tenant:'xxx' */`
+  - `addHintToSql(sql, tenant)` → 在 SQL 前添加 hint
+  - `removeAllComments(sql)` → 移除所有注释（行注释、块注释）
+  - `getDetailedInfo(sql)` → 返回 `{ hasHint, hint, sqlType, isValid, cleanSql }`
+  - `isValidTenant(tenant)` → 校验租户编码格式
+  - `validateSql(sql)` → 实际调用解析器验证语法（替换当前 TODO）
+- [x] **3.2 实现工具方法**
+  - 在 `SqlParserService` 和 `SqlRewriter` 上添加对应方法
+  - `getSqlType` 通过检查 parseTree 根节点子节点类型实现
+  - `createHint` / `addHintToSql` 纯字符串操作
+  - `removeAllComments` 基于正则
+  - `validateSql` 调用 `parser.validate()`
+- [x] **3.3 全部测试通过** — 日期：2026-03-20 ✅ 29/29 pass（含 batchRewriteWithDetails 3 个用例）
+
+### 4. 带详情的批量处理（batchRewriteWithDetails）
+
+- [x] **4.1 编写测试用例**（已放入 `test/utility-methods.test.ts`）
+  - 多条 SQL 批量处理，返回 `RewriteResult[]`
+  - 混合类型（SELECT + INSERT + 事务语句）
+  - 部分失败场景（一条解析失败不影响其余）
+- [x] **4.2 实现 batchRewriteWithDetails**
+  - `SqlParserService.batchRewriteWithDetails(sqlList): RewriteResult[]`
+  - `SqlRewriter.batchRewrite(sqlList): RewriteResult[]`
+- [x] **4.3 全部测试通过** — 日期：2026-03-20 ✅（与 3.3 合并验证）
+
+### 5. 完善错误体系
+
+对齐旧库的 6 种错误类（`SqlParseError`, `HintParseError`, `AstTransformError`, `SqlRewriteError`, `ConfigError`, `UnsupportedSqlError`）+ `ErrorUtils`。
+
+- [x] **5.1 编写测试用例** `test/error-handling.test.ts`
+  - 无效 SQL → 抛出 `ParserError`（或 `SqlParseError`）
+  - 无效配置 → 抛出 `ConfigError`
+  - Listener 处理异常 → 抛出 `TransformError`（或 `AstTransformError`）
+  - 不支持的 SQL 类型 → 抛出 `UnsupportedSqlError`
+  - `ErrorUtils.formatError()` 输出格式正确
+  - `ErrorUtils.isSqlParseError()` 类型守卫正确
+- [x] **5.2 实现错误分类**
+  - 扩展 `src/core/types.ts` 中的错误类
+  - 添加 `HintParseError`, `TransformError`, `UnsupportedSqlError`
+  - 实现 `ErrorUtils` 工具类（formatError, isSqlParseError, getErrorMessage）
+- [x] **5.3 全部测试通过** — 日期：2026-03-20 ✅ 12/12 pass
+
+---
+
+## Phase 2：超越旧库
+
+### 6. REPLACE INTO 支持
+
+- [ ] **6.1 编写测试用例**（可放入 `test/tenant-filter.test.ts` 新增分组）
+  - `REPLACE INTO tnt_ma.users (col1, col2) VALUES (...)` → 注入租户列和值
+  - `REPLACE INTO tnt_ma.users SET col1=val1` → 注入租户字段
+  - `REPLACE INTO ... SELECT ...` → 注入租户条件
+- [ ] **6.2 实现 REPLACE 语句租户注入**
+  - 在 `TenantConditionListener` 中添加 `enterReplaceStatement` 处理
+- [ ] **6.3 全部测试通过** — 日期：____
+
+### 7. 多语句支持
+
+- [ ] **7.1 编写测试用例** `test/multi-statement.test.ts`
+  - 分号分隔的多条 SQL：`SELECT ...; UPDATE ...; DELETE ...`
+  - 每条独立注入租户条件
+  - 混合有 hint 和无 hint 的语句
+  - 空语句 / 仅分号 → 跳过
+  - 带事务包裹：`START TRANSACTION; ...; COMMIT;`
+- [ ] **7.2 实现多语句拆分与逐条处理**
+  - 在 orchestrator 层拆分 SQL，逐条调用 parser → listener chain
+  - 合并结果返回
+- [ ] **7.3 全部测试通过** — 日期：____
+
+### 8. TiDB 方言落地
+
+- [ ] **8.1 编写测试用例** `test/tidb-dialect.test.ts`
+  - 基本 SELECT/INSERT/UPDATE/DELETE 租户注入（TiDB 语法）
+  - TiDB 特有语法（如 `SPLIT REGION`, `ALTER TABLE ... SHARD_ROW_ID_BITS` 等）
+  - 配置 `dialect: 'tidb'` 切换方言
+- [ ] **8.2 实现 TiDB Parser 与租户注入**
+  - 实现 `TiDBParser extends BaseSQLParser`
+  - 注册到 `ParserFactory`
+  - 确认 TenantFilterListener 兼容 TiDB 语法树
+- [ ] **8.3 全部测试通过** — 日期：____
+
+### 9. 性能基准测试
+
+- [ ] **9.1 编写 benchmark 脚本** `test/benchmark.ts`
+  - 准备 100+ 条不同复杂度的 SQL（简单查询、多表 JOIN、嵌套子查询、CTE）
+  - 分别测量新旧库的：单次解析耗时、吞吐量（ops/sec）、内存占用
+  - 输出对比表格
+- [ ] **9.2 运行并输出对比报告** — 日期：____
+
+---
+
+## Phase 3：增值能力
+
+### 10. 审计 Listener
+
+- [ ] **10.1 编写测试用例** `test/audit-listener.test.ts`
+  - SELECT → 记录涉及的表名、操作类型
+  - INSERT/UPDATE/DELETE → 记录目标表、操作类型
+  - JOIN → 记录所有参与表
+  - 输出格式：`{ tables: string[], operation: string, timestamp: number }`
+- [ ] **10.2 实现审计 Listener**
+  - `src/listeners/audit/audit-listener.ts`，优先级 200（最后执行）
+  - 遍历语法树收集表信息，写入 `sharedState` 或回调
+- [ ] **10.3 全部测试通过** — 日期：____
+
+### 11. 敏感字段脱敏 Listener
+
+- [ ] **11.1 编写测试用例** `test/masking-listener.test.ts`
+  - 配置敏感字段列表（如 `email`, `phone`）
+  - `SELECT email FROM users` → 改写为 `SELECT CONCAT(LEFT(email,3),'***') as email FROM users`
+  - 非目标字段不受影响
+  - JOIN 查询中的敏感字段
+- [ ] **11.2 实现脱敏 Listener**
+  - `src/listeners/masking/masking-listener.ts`
+  - 通过 `TokenStreamRewriter.replace()` 替换 SELECT 列表中的敏感列
+- [ ] **11.3 全部测试通过** — 日期：____
+
+### 12. SQL 白名单校验
+
+- [ ] **12.1 编写测试用例** `test/whitelist-listener.test.ts`
+  - 配置允许的操作类型（如仅 `SELECT`, `INSERT`, `UPDATE`, `DELETE`）
+  - DDL 语句（`CREATE TABLE`, `DROP TABLE`, `ALTER TABLE`）→ 抛出异常或标记拒绝
+  - `TRUNCATE` → 拒绝
+  - 事务语句（`BEGIN`, `COMMIT`）→ 放行
+- [ ] **12.2 实现白名单校验 Listener**
+  - `src/listeners/whitelist/whitelist-listener.ts`，优先级 5（最先执行）
+  - 检查语法树根节点类型，不在白名单内则中断处理
+- [ ] **12.3 全部测试通过** — 日期：____
+
+---
+
+## 进度汇总
+
+| Phase | 功能 | 状态 |
+|:-----:|------|:----:|
+| 1 | 库名改写 Listener | ⬜ |
+| 1 | EXPLAIN/DESCRIBE 处理 | ⬜ |
+| 1 | 工具方法补齐 | ⬜ |
+| 1 | batchRewriteWithDetails | ⬜ |
+| 1 | 完善错误体系 | ⬜ |
+| 2 | REPLACE INTO | ⬜ |
+| 2 | 多语句支持 | ⬜ |
+| 2 | TiDB 方言 | ⬜ |
+| 2 | 性能基准测试 | ⬜ |
+| 3 | 审计 Listener | ⬜ |
+| 3 | 敏感字段脱敏 | ⬜ |
+| 3 | SQL 白名单校验 | ⬜ |
+
+> ⬜ 未开始 / 🔧 进行中 / ✅ 已完成
+
+---
+---
+
+# 附录：测试 SQL 脚本范围
+
+以下为原始测试 SQL 参考脚本：
 ```sql
 
 -- 为租户 'sxlq' 插入用户数据

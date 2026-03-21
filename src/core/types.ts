@@ -98,6 +98,18 @@ export interface HintListenerConfig extends BaseListenerConfig {
 }
 
 /**
+ * 库名改写 Listener 配置
+ */
+export interface DatabaseRewriteListenerConfig extends BaseListenerConfig {
+  /** 数据库名前缀，如 'dev_mc_' */
+  dbPrefix: string;
+  /** 仅改写的目标库名列表（为空则改写所有） */
+  targetDatabases?: string[];
+  /** 排除的库名列表（不改写） */
+  excludeDatabases?: string[];
+}
+
+/**
  * Listener 配置
  */
 export interface ListenerConfig {
@@ -105,6 +117,8 @@ export interface ListenerConfig {
   tenant: TenantListenerConfig;
   /** Hint Listener 配置 */
   hint: HintListenerConfig;
+  /** 库名改写 Listener 配置（可选） */
+  databaseRewrite?: DatabaseRewriteListenerConfig;
 }
 
 /**
@@ -183,6 +197,21 @@ export const SHARED_STATE_KEYS = {
 } as const;
 
 // ============================================================================
+// Hint 正则常量
+// ============================================================================
+
+/**
+ * Hint 匹配正则（带捕获组，提取 tenant 值）
+ * 格式：/*& tenant:'xxx' *\/
+ */
+export const HINT_REGEX = /\/\*&\s*tenant\s*:\s*['"]([^'"]+)['"]\s*\*\//i;
+
+/**
+ * Hint 全局匹配正则（用于 removeHints，g 标志）
+ */
+export const HINT_REGEX_GLOBAL = /\/\*&\s*tenant\s*:\s*['"][^'"]+['"]\s*\*\//gi;
+
+// ============================================================================
 // Hint 相关类型
 // ============================================================================
 
@@ -259,5 +288,63 @@ export class ParserError extends SqlParseError {
   constructor(message: string, originalSql: string, cause?: Error) {
     super(ErrorType.PARSE_ERROR, message, originalSql, cause);
     this.name = 'ParserError';
+  }
+}
+
+/**
+ * Hint 解析错误
+ */
+export class HintParseError extends SqlParseError {
+  constructor(message: string, originalSql: string, cause?: Error) {
+    super(ErrorType.PARSE_ERROR, `Hint解析失败: ${message}`, originalSql, cause);
+    this.name = 'HintParseError';
+  }
+}
+
+/**
+ * Listener 转换错误
+ */
+export class TransformError extends SqlParseError {
+  constructor(message: string, originalSql: string, cause?: Error) {
+    super(ErrorType.LISTENER_ERROR, `转换失败: ${message}`, originalSql, cause);
+    this.name = 'TransformError';
+  }
+}
+
+/**
+ * 不支持的 SQL 类型错误
+ */
+export class UnsupportedSqlError extends SqlParseError {
+  public readonly sqlType: string;
+
+  constructor(sqlType: string, originalSql: string) {
+    super(ErrorType.VALIDATION_ERROR, `不支持的SQL类型: ${sqlType}`, originalSql);
+    this.name = 'UnsupportedSqlError';
+    this.sqlType = sqlType;
+  }
+}
+
+/**
+ * 错误工具类
+ */
+export class ErrorUtils {
+  static formatError(error: SqlParseError): string {
+    const sql = error.originalSql || '';
+    const truncatedSql = sql.length > 200 ? sql.substring(0, 200) + '...' : sql;
+    let message = `${error.name}: ${error.message}\n`;
+    message += `原始SQL: ${truncatedSql}\n`;
+    if (error.cause) {
+      message += `根本原因: ${error.cause.message}\n`;
+    }
+    return message;
+  }
+
+  static isSqlParseError(error: unknown): error is SqlParseError {
+    return error instanceof SqlParseError;
+  }
+
+  static getErrorMessage(error: unknown): string {
+    if (error instanceof Error) return error.message;
+    return String(error);
   }
 }

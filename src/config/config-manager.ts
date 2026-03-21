@@ -63,6 +63,11 @@ export class ConfigManager {
           ...base.listeners.hint,
           ...override.listeners?.hint,
         },
+        ...(override.listeners?.databaseRewrite
+          ? { databaseRewrite: { ...override.listeners.databaseRewrite } }
+          : base.listeners.databaseRewrite
+            ? { databaseRewrite: { ...base.listeners.databaseRewrite } }
+            : {}),
       },
       errorHandling: {
         ...base.errorHandling,

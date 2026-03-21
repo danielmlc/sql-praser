@@ -1,8 +1,26 @@
-import { CharStream, CommonTokenStream, TokenStreamRewriter } from 'antlr4ng';
+import { CharStream, CommonTokenStream, TokenStreamRewriter, BaseErrorListener, RecognitionException, Recognizer, ATNSimulator } from 'antlr4ng';
 import { ISQLParser } from '../core/interfaces';
 import { SQLDialect } from '../core/enums';
-import type { ParseResult, ParseTree } from '../core/types';
+import type { ParseResult, ParseTree, SyntaxError as SyntaxErrorInfo } from '../core/types';
 import type { ANTLR4Lexer, ANTLR4Parser } from '../core/antlr4-types';
+
+/**
+ * 收集 ANTLR4 解析错误的 Listener
+ */
+class ErrorCollector extends BaseErrorListener {
+  readonly errors: SyntaxErrorInfo[] = [];
+
+  syntaxError(
+    _recognizer: Recognizer<ATNSimulator>,
+    _offendingSymbol: unknown,
+    line: number,
+    column: number,
+    msg: string,
+    _e: RecognitionException | null
+  ): void {
+    this.errors.push({ message: msg, line, column });
+  }
+}
 
 /**
  * 基础 Parser 抽象类
@@ -27,12 +45,18 @@ export abstract class BaseSQLParser implements ISQLParser {
 
       // 创建词法分析器
       const lexer = this.createLexer(inputStream);
+      const lexerErrors = new ErrorCollector();
+      lexer.removeErrorListeners();
+      lexer.addErrorListener(lexerErrors);
 
       // 创建 Token 流
       const tokenStream = new CommonTokenStream(lexer);
 
       // 创建语法分析器
       const parser = this.createParser(tokenStream);
+      const parserErrors = new ErrorCollector();
+      parser.removeErrorListeners();
+      parser.addErrorListener(parserErrors);
 
       // 开始解析
       const parseTree = this.startParsing(parser);
@@ -40,14 +64,16 @@ export abstract class BaseSQLParser implements ISQLParser {
       // 创建重写器
       const rewriter = new TokenStreamRewriter(tokenStream);
 
+      const hasErrors = lexerErrors.errors.length > 0 || parserErrors.errors.length > 0;
+
       return {
         originalSql: sql,
         parseTree,
         tokenStream,
         rewriter,
-        lexerErrors: [],
-        parserErrors: [],
-        success: true,
+        lexerErrors: lexerErrors.errors,
+        parserErrors: parserErrors.errors,
+        success: !hasErrors,
       };
     } catch (error) {
       return {

@@ -1,0 +1,30 @@
+{
+  "name": "@cs/sql-parser",
+  "version": "1.0.1-beta.1",
+  "description": "sql处理工具包",
+  "author": "danielmlc <danielmlc@126.com>",
+  "homepage": "",
+  "license": "ISC",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "node -r ts-node/register test/test.ts",
+    "test2": "node -r ts-node/register test/wrapper-statement-test.ts",
+    "test:sql": "node -r ts-node/register test/sql-file-test.ts",
+    "test:database": "node -r ts-node/register test/test-database-rewriter.js",
+    "prebuild": "rimraf lib",
+    "build": "tsc -p ./tsconfig.json",
+    "watch": "tsc -p ./tsconfig.json --watch",
+    "publish": "pnpm publish --no-git-checks",
+    "pre-publish:beta": "pnpm version prerelease --preid=beta",
+    "publish:beta": "pnpm run pre-publish:beta && pnpm publish --no-git-checks --tag beta"
+  },
+  "dependencies": {
+    "node-sql-parser": "^5.3.12"
+  }
+}

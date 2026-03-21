@@ -16,7 +16,10 @@ export * from './config';
 
 import { SQLProcessorOrchestrator } from './orchestrator';
 import { ConfigManager } from './config';
-import { SqlParserConfig, RewriteResult, HintInfo } from './core/types';
+import { ParserFactory } from './parser/factory';
+import { SqlParserConfig, RewriteResult, HintInfo, HINT_REGEX, HINT_REGEX_GLOBAL } from './core/types';
+import { SQLDialect } from './core/enums';
+import { TenantIdValidator } from './utils/tenant-id-validator';
 
 /**
  * SqlParserService
@@ -25,6 +28,7 @@ import { SqlParserConfig, RewriteResult, HintInfo } from './core/types';
 export class SqlParserService {
   private static orchestrator: SQLProcessorOrchestrator;
   private static config: SqlParserConfig;
+  private static validationParser: ReturnType<typeof ParserFactory.createParser>;
 
   /**
    * 初始化服务
@@ -211,8 +215,7 @@ export class SqlParserService {
    * @returns Hint 信息
    */
   static extractHint(sql: string): HintInfo | undefined {
-    const hintRegex = /\/\*&\s*tenant\s*:\s*['"]([^'"]+)['"]\s*\*\//i;
-    const match = sql.match(hintRegex);
+    const match = sql.match(HINT_REGEX);
     if (match) {
       return {
         tenant: match[1],
@@ -228,7 +231,7 @@ export class SqlParserService {
    * @returns 是否有 Hint
    */
   static hasHint(sql: string): boolean {
-    return /\/\*&\s*tenant\s*:/i.test(sql);
+    return HINT_REGEX.test(sql);
   }
 
   /**
@@ -237,7 +240,7 @@ export class SqlParserService {
    * @returns 移除 Hints 后的 SQL
    */
   static removeHints(sql: string): string {
-    return sql.replace(/\/\*&\s*tenant\s*:\s*['"][^'"]+['"]\s*\*\//gi, '');
+    return sql.replace(HINT_REGEX_GLOBAL, '');
   }
 
   /**
@@ -246,9 +249,121 @@ export class SqlParserService {
    * @returns 是否有效
    */
   static validateSql(sql: string): boolean {
+    try {
+      if (!this.validationParser) {
+        this.validationParser = ParserFactory.createParser(SQLDialect.MYSQL);
+      }
+      return this.validationParser.validate(sql);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 获取 SQL 类型
+   * @param sql SQL 字符串
+   * @returns SQL 类型（SELECT/INSERT/UPDATE/DELETE 等）或 null
+   */
+  static getSqlType(sql: string): string | null {
+    try {
+      const cleanSql = this.removeAllComments(sql);
+      if (!cleanSql) return null;
+
+      const firstWord = cleanSql.split(/\s+/)[0].toUpperCase();
+      const knownTypes = [
+        'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER',
+        'REPLACE', 'TRUNCATE', 'SHOW', 'DESCRIBE', 'EXPLAIN', 'USE', 'SET',
+        'BEGIN', 'COMMIT', 'ROLLBACK',
+      ];
+      return knownTypes.includes(firstWord) ? firstWord : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * 创建 Hint 字符串
+   * @param tenant 租户编码
+   * @returns Hint 字符串
+   */
+  static createHint(tenant: string): string {
+    return `/*& tenant:'${tenant}' */`;
+  }
+
+  /**
+   * 在 SQL 前添加 Hint
+   * @param sql 原始 SQL
+   * @param tenant 租户编码
+   * @returns 添加 Hint 后的 SQL
+   */
+  static addHintToSql(sql: string, tenant: string): string {
+    return `${this.createHint(tenant)} ${sql}`;
+  }
+
+  /**
+   * 移除 SQL 中的所有注释（块注释和行注释）
+   * @param sql 原始 SQL
+   * @returns 移除注释后的 SQL
+   */
+  static removeAllComments(sql: string): string {
+    if (!sql) return sql;
+    return sql
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')  // 块注释
+      .replace(/--.*$/gm, '')              // 行注释 --
+      .replace(/\s+/g, ' ')               // 合并空格
+      .trim();
+  }
+
+  /**
+   * 获取 SQL 详细信息
+   * @param sql SQL 字符串
+   * @returns 详细信息
+   */
+  static getDetailedInfo(sql: string): {
+    hasHint: boolean;
+    hint?: HintInfo;
+    sqlType: string | null;
+    isValid: boolean;
+    cleanSql: string;
+  } {
+    const hint = this.extractHint(sql);
+    return {
+      hasHint: !!hint,
+      hint,
+      sqlType: this.getSqlType(sql),
+      isValid: this.validateSql(sql),
+      cleanSql: this.removeAllComments(sql),
+    };
+  }
+
+  /**
+   * 验证租户编码格式
+   * @param tenant 租户编码
+   * @returns 是否有效
+   */
+  static isValidTenant(tenant: string): boolean {
+    return TenantIdValidator.isValid(tenant);
+  }
+
+  /**
+   * 批量处理 SQL 并返回详细结果
+   * @param sqlList SQL 列表
+   * @returns 处理结果列表
+   */
+  static batchRewriteWithDetails(sqlList: string[]): RewriteResult[] {
     this.ensureInitialized();
-    // TODO: 实现 SQL 验证
-    return true;
+    return sqlList.map(sql => {
+      try {
+        return this.process(sql);
+      } catch (error) {
+        return {
+          sql,
+          modified: false,
+          listenerResults: [],
+          error: error as Error,
+        };
+      }
+    });
   }
 }
 

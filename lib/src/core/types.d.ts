@@ -76,6 +76,17 @@ export interface HintListenerConfig extends BaseListenerConfig {
     preserveHint: boolean;
 }
 /**
+ * 库名改写 Listener 配置
+ */
+export interface DatabaseRewriteListenerConfig extends BaseListenerConfig {
+    /** 数据库名前缀，如 'dev_mc_' */
+    dbPrefix: string;
+    /** 仅改写的目标库名列表（为空则改写所有） */
+    targetDatabases?: string[];
+    /** 排除的库名列表（不改写） */
+    excludeDatabases?: string[];
+}
+/**
  * Listener 配置
  */
 export interface ListenerConfig {
@@ -83,6 +94,8 @@ export interface ListenerConfig {
     tenant: TenantListenerConfig;
     /** Hint Listener 配置 */
     hint: HintListenerConfig;
+    /** 库名改写 Listener 配置（可选） */
+    databaseRewrite?: DatabaseRewriteListenerConfig;
 }
 /**
  * 错误处理配置
@@ -147,6 +160,15 @@ export declare const SHARED_STATE_KEYS: {
     readonly TENANT_INFO: "tenantInfo";
 };
 /**
+ * Hint 匹配正则（带捕获组，提取 tenant 值）
+ * 格式：/*& tenant:'xxx' *\/
+ */
+export declare const HINT_REGEX: RegExp;
+/**
+ * Hint 全局匹配正则（用于 removeHints，g 标志）
+ */
+export declare const HINT_REGEX_GLOBAL: RegExp;
+/**
  * Hint 信息接口
  */
 export interface HintInfo {
@@ -190,4 +212,31 @@ export declare class ConfigError extends SqlParseError {
  */
 export declare class ParserError extends SqlParseError {
     constructor(message: string, originalSql: string, cause?: Error);
+}
+/**
+ * Hint 解析错误
+ */
+export declare class HintParseError extends SqlParseError {
+    constructor(message: string, originalSql: string, cause?: Error);
+}
+/**
+ * Listener 转换错误
+ */
+export declare class TransformError extends SqlParseError {
+    constructor(message: string, originalSql: string, cause?: Error);
+}
+/**
+ * 不支持的 SQL 类型错误
+ */
+export declare class UnsupportedSqlError extends SqlParseError {
+    readonly sqlType: string;
+    constructor(sqlType: string, originalSql: string);
+}
+/**
+ * 错误工具类
+ */
+export declare class ErrorUtils {
+    static formatError(error: SqlParseError): string;
+    static isSqlParseError(error: unknown): error is SqlParseError;
+    static getErrorMessage(error: unknown): string;
 }

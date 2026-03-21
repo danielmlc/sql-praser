@@ -1,5 +1,5 @@
 import { BaseListener } from '../base/base-listener';
-import { ListenerContext, HintListenerConfig, HintInfo, ParseTree, SHARED_STATE_KEYS } from '../../core/types';
+import { ListenerContext, HintListenerConfig, HintInfo, ParseTree, SHARED_STATE_KEYS, HINT_REGEX } from '../../core/types';
 
 /**
  * Hint Listener
@@ -7,10 +7,6 @@ import { ListenerContext, HintListenerConfig, HintInfo, ParseTree, SHARED_STATE_
  */
 export class HintListener extends BaseListener<HintListenerConfig> {
   protected readonly name = 'HintListener';
-
-  constructor(config: HintListenerConfig) {
-    super(config);
-  }
 
   /**
    * 获取优先级
@@ -45,8 +41,7 @@ export class HintListener extends BaseListener<HintListenerConfig> {
    * 支持格式：/*& tenant:'xxx' *\/
    */
   private extractTenantHint(sql: string): HintInfo | undefined {
-    const hintRegex = /\/\*&\s*tenant\s*:\s*['"]([^'"]+)['"]\s*\*\//i;
-    const match = sql.match(hintRegex);
+    const match = sql.match(HINT_REGEX);
 
     if (match) {
       return {

@@ -31,20 +31,12 @@ const { module: MySqlParserListener, success: listenerLoaded } = Antlr4Loader.lo
   }
 );
 
-if (!listenerLoaded) {
-  throw new Error('MySqlParserListener failed to load. Please run "pnpm run generate:parser" first.');
-}
-
 /**
  * 租户条件 Listener
  * 负责在 SQL 中添加租户过滤条件
  */
 export class TenantFilterListener extends BaseListener<TenantListenerConfig> {
   protected readonly name = 'TenantFilterListener';
-
-  constructor(config: TenantListenerConfig) {
-    super(config);
-  }
 
   /**
    * 获取优先级

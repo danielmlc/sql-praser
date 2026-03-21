@@ -19,6 +19,7 @@ import { SqlParserConfig, RewriteResult, HintInfo } from './core/types';
 export declare class SqlParserService {
     private static orchestrator;
     private static config;
+    private static validationParser;
     /**
      * 初始化服务
      */
@@ -108,6 +109,55 @@ export declare class SqlParserService {
      * @returns 是否有效
      */
     static validateSql(sql: string): boolean;
+    /**
+     * 获取 SQL 类型
+     * @param sql SQL 字符串
+     * @returns SQL 类型（SELECT/INSERT/UPDATE/DELETE 等）或 null
+     */
+    static getSqlType(sql: string): string | null;
+    /**
+     * 创建 Hint 字符串
+     * @param tenant 租户编码
+     * @returns Hint 字符串
+     */
+    static createHint(tenant: string): string;
+    /**
+     * 在 SQL 前添加 Hint
+     * @param sql 原始 SQL
+     * @param tenant 租户编码
+     * @returns 添加 Hint 后的 SQL
+     */
+    static addHintToSql(sql: string, tenant: string): string;
+    /**
+     * 移除 SQL 中的所有注释（块注释和行注释）
+     * @param sql 原始 SQL
+     * @returns 移除注释后的 SQL
+     */
+    static removeAllComments(sql: string): string;
+    /**
+     * 获取 SQL 详细信息
+     * @param sql SQL 字符串
+     * @returns 详细信息
+     */
+    static getDetailedInfo(sql: string): {
+        hasHint: boolean;
+        hint?: HintInfo;
+        sqlType: string | null;
+        isValid: boolean;
+        cleanSql: string;
+    };
+    /**
+     * 验证租户编码格式
+     * @param tenant 租户编码
+     * @returns 是否有效
+     */
+    static isValidTenant(tenant: string): boolean;
+    /**
+     * 批量处理 SQL 并返回详细结果
+     * @param sqlList SQL 列表
+     * @returns 处理结果列表
+     */
+    static batchRewriteWithDetails(sqlList: string[]): RewriteResult[];
 }
 /**
  * SqlRewriter

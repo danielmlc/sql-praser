@@ -20,6 +20,9 @@
     "generate:parser:tidb": "antlr-ng -Dlanguage=TypeScript -o ./generated/tidb grammar/tidb/TiDBLexer.g4 grammar/tidb/TiDBParser.g4",
     "generate:all": "pnpm run generate:parser && pnpm run generate:parser:tidb",
     "test": "node -r ts-node/register test/tenant-filter.test.ts",
+    "test:database": "node -r ts-node/register test/database-rewrite.test.ts",
+    "test:error": "node -r ts-node/register test/error-handling.test.ts",
+    "test:all": "pnpm run test && pnpm run test:database && pnpm run test:error",
     "prepublishOnly": "pnpm run build"
   },
   "keywords": [

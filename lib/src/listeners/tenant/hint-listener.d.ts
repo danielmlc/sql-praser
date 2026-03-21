@@ -6,7 +6,6 @@ import { ListenerContext, HintListenerConfig, ParseTree } from '../../core/types
  */
 export declare class HintListener extends BaseListener<HintListenerConfig> {
     protected readonly name = "HintListener";
-    constructor(config: HintListenerConfig);
     /**
      * 获取优先级
      * Hint 提取应该最先执行（优先级最高）

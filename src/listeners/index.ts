@@ -11,4 +11,4 @@ export * from './tenant/tenant-filter-listener';
 export * from './tenant/hint-listener';
 
 // 数据库相关 Listener
-// export * from './database/database-rewrite-listener';
+export * from './database/database-rewrite-listener';

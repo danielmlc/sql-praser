@@ -6,7 +6,6 @@ import { ListenerContext, TenantListenerConfig } from '../../core/types';
  */
 export declare class TenantFilterListener extends BaseListener<TenantListenerConfig> {
     protected readonly name = "TenantFilterListener";
-    constructor(config: TenantListenerConfig);
     /**
      * 获取优先级
      * 租户过滤应该优先级较高（数字小），在库名改写之后执行
